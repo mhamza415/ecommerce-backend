@@ -3,7 +3,11 @@ import {
   authUser,
   registerUser,
   createAdminUser,
+  getUserProfile,
+  updateUserProfile,
+  deleteUserProfile,
 } from "../controllers/userController.js";
+import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -35,5 +39,14 @@ router.route("/register").post(registerUser);
 // @access  Public
 
 router.route("/login").post(authUser);
+
+// @desc    get user Profile
+// @route    http://localhost/8000/user/login
+// @access  Protected
+router
+  .route("/profile")
+  .get(protect, getUserProfile)
+  .put(protect, updateUserProfile)
+  .delete(protect, deleteUserProfile);
 
 export default router;

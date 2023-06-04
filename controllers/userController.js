@@ -103,4 +103,96 @@ const authUser = async (req, res, next) => {
   }
 };
 
-export { registerUser, authUser, createAdminUser };
+// @desc    Get user profile details
+// @access  Protected
+
+const getUserProfile = async (req, res, next) => {
+  const user = await User.findById(req.user._id);
+  try {
+    if (user) {
+      res.status(200).json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      });
+    } else {
+      res.status(404);
+      throw new Error("User Not found");
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    update user profile details
+// @access  Protected
+// @method  Put
+
+const updateUserProfile = async (req, res, next) => {
+  try {
+    const { name, email, password } = req.body;
+    // checking email should be unique must not in db
+
+    const existsEmail = await User.findOne({ email });
+    if (existsEmail) {
+      res.status(400);
+      throw new Error("email already exists");
+    }
+
+    const user = await User.findById(req.user._id);
+    if (user) {
+      user.name = name || user.name;
+      user.email = email || user.email;
+      user.password = password || user.password;
+      const updatedUser = await user.save();
+      res.status(201).json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        isAdmin: updatedUser.isAdmin,
+        Token: generateToken(updatedUser._id),
+      });
+    } else {
+      res.status(404);
+      throw new Error("user not found");
+    }
+    console.log(user.name, user.email, user.password);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    update user profile details
+// @access  Protected
+const deleteUserProfile = async (req, res, next) => {
+  try {
+    // check if the requesting user exists or have been deleted
+    // if req.user does not exist throwing error
+    if (!req.user) {
+      res.status(401);
+      throw new Error(
+        "Unauthorized: User not recognized or have been deleted "
+      );
+    }
+
+    const user = await User.findById(req.user._id);
+    if (user) {
+      await User.deleteOne({ _id: user._id });
+      res.status(200).json({ message: "user removed" });
+    } else {
+      res.status(404);
+      throw new Error("User not found");
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+export {
+  registerUser,
+  authUser,
+  createAdminUser,
+  getUserProfile,
+  updateUserProfile,
+  deleteUserProfile,
+};
